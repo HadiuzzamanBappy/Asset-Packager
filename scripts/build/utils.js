@@ -1,20 +1,23 @@
-const logger = require('./logger');
+function validateEnvironment() {
+  if (!process.env.NODE_ENV) {
+    process.env.NODE_ENV = 'development';
+  }
+}
+
+async function parallelize(tasks) {
+  await Promise.all(tasks.map(task => task()));
+}
+
+function measurePerformance(label, fn) {
+  const start = performance.now();
+  return Promise.resolve(fn()).then(() => {
+    const duration = ((performance.now() - start) / 1000).toFixed(2);
+    console.log(`[PERF] ${label}: ${duration}s`);
+  });
+}
 
 module.exports = {
-  async measurePerformance(name, fn) {
-    const start = Date.now();
-    await fn();
-    const duration = Date.now() - start;
-    logger.debug(`⏱️ ${name} completed in ${duration}ms`);
-  },
-
-  async parallelize(tasks) {
-    return Promise.all(tasks.map(task => task()));
-  },
-
-  validateEnvironment() {
-    if (process.env.NODE_ENV === undefined) {
-      process.env.NODE_ENV = 'development';
-    }
-  }
+  validateEnvironment,
+  parallelize,
+  measurePerformance
 };

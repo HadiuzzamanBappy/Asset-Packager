@@ -7,4 +7,5 @@ module.exports = async function clean() {
     await fs.emptyDir(paths.dist.base);
     await fs.ensureDir(paths.dist.base);
   });
+  // logger.success('Dist directory cleaned successfully');
 };

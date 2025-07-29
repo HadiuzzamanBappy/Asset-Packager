@@ -1,46 +1,28 @@
+const fs = require('fs-extra');
 const path = require('path');
 const postcss = require('postcss');
-const autoprefixer = require('autoprefixer');
 const cssnano = require('cssnano');
-const postcssUrl = require('postcss-url');
-const { glob } = require('glob');
-const fs = require('fs-extra');
+const autoprefixer = require('autoprefixer');
+const glob = require('glob');
 const paths = require('../../config/paths');
 const constants = require('../../config/constants');
 const { measurePerformance } = require('./utils');
 
 async function bundleCSS() {
-  const cssFiles = await glob(paths.src.css);
-  const bundleContent = await concatenateFiles(cssFiles);
-  await processCSS(bundleContent);
-}
+  await measurePerformance('Bundle CSS', async () => {
+    const files = glob.sync(paths.src.css);
+    const combined = (await Promise.all(files.map(file => fs.readFile(file, 'utf8')))).join('\n');
 
-async function concatenateFiles(files) {
-  return (await Promise.all(
-    files.map(file => fs.readFile(file, 'utf8'))
-  )).join('\n');
-}
+    const processed = await postcss([autoprefixer]).process(combined, { from: undefined });
+    const outputPath = path.join(paths.dist.base, paths.dist.css);
 
-async function processCSS(css) {
-  const cssPath = path.join(paths.dist.base, paths.dist.css);
-  
-  // Development processing
-  const devResult = await postcss([
-    postcssUrl({ url: 'rebase' }),
-    autoprefixer({ overrideBrowserslist: constants.SUPPORTED_BROWSERS })
-  ]).process(css, { from: cssPath, to: cssPath });
-  
-  await fs.writeFile(cssPath, devResult.css);
-  
-  // Production processing
-  const prodResult = await postcss([
-    postcssUrl({ url: 'rebase' }),
-    autoprefixer({ overrideBrowserslist: constants.SUPPORTED_BROWSERS }),
-    cssnano({ preset: constants.CSS_NANO_PRESET })
-  ]).process(css, { from: cssPath, to: cssPath });
-  
-  const minPath = cssPath.replace('.css', '.min.css');
-  await fs.writeFile(minPath, prodResult.css);
+    await fs.writeFile(outputPath, processed.css);
+
+    const minified = await postcss([cssnano({ preset: constants.CSS_NANO_PRESET })]).process(combined, { from: undefined });
+    const minPath = outputPath.replace('.css', '.min.css');
+
+    await fs.writeFile(minPath, minified.css);
+  });
 }
 
 module.exports = bundleCSS;

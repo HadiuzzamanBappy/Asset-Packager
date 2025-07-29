@@ -70,6 +70,4 @@ npm run clean
    - Key features
    - Requirements
 
-3. Place both files in your project root directory.
-
-4. These files follow common open-source project conventions and will help maintain your project properly.
+3. Place both js and css files in the project root/src/{ css/js } directory.

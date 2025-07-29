@@ -8,16 +8,13 @@ const { measurePerformance } = require('./utils');
 
 async function bundleJS() {
   let jsFiles = await glob(paths.src.js);
-  
-  // Dependency-aware sorting
   jsFiles = sortByDependencies(jsFiles);
-  
+
   const bundleContent = await concatenateFiles(jsFiles);
   await outputBundles(bundleContent);
 }
 
 function sortByDependencies(files) {
-  // Implement proper dependency sorting (e.g., jQuery first)
   return files.sort((a, b) => {
     if (a.includes('jquery')) return -1;
     if (b.includes('jquery')) return 1;
@@ -33,18 +30,16 @@ async function concatenateFiles(files) {
 
 async function outputBundles(content) {
   const jsPath = path.join(paths.dist.base, paths.dist.js);
-  
-  // Development bundle
+
   await fs.writeFile(jsPath, content);
-  
-  // Production minified bundle
+
   const minified = await minify(content, {
     ecma: constants.JS_ECMA_VERSION,
     compress: true,
     mangle: true,
     sourceMap: false
   });
-  
+
   const minPath = jsPath.replace('.js', '.min.js');
   await fs.writeFile(minPath, minified.code);
 }
